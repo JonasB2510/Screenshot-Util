@@ -9,3 +9,4 @@ build.py
 *.json
 test*
 dist
+build.bat
