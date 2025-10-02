@@ -2,6 +2,7 @@ import os
 import win32com.client
 import PyInstaller.__main__
 import psutil
+import shutil
 
 PROCNAME = "pyscreenshotutil.exe"
 
@@ -10,12 +11,25 @@ for proc in psutil.process_iter():
     if proc.name() == PROCNAME:
         proc.kill()
 
+folder_path = os.path.join("dist", "pyscreenshotutil")
+old_folder_path = os.path.join("dist", "pyscreenshotutil_old")
+
+if os.path.exists(folder_path):
+    if os.path.exists(old_folder_path):
+        shutil.rmtree(old_folder_path)
+    os.rename(folder_path, old_folder_path)
+
+if os.path.exists("camera.ico"):
+    icon = "camera.ico"
+else:
+    icon = "program.ico"
+
 PyInstaller.__main__.run([
     'main.py',                   # your entry point
     '--onedir',                  # bundle into a folder (not single exe)
     '--noconsole',               # no console window
     '--name=pyscreenshotutil',   # exe name
-    '--icon=camera2.ico',        # custom icon
+    f'--icon={icon}',            # custom icon
 ])
 
 
