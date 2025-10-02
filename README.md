@@ -1,3 +1,1 @@
 # Screenshot-Util
-
-leck eier!
