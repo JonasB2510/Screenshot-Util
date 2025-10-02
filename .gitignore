@@ -1,0 +1,11 @@
+.venv
+.vscode
+build
+dist/v2
+screenshots
+build.py
+*.ico
+*.spec
+*.json
+test*
+dist
