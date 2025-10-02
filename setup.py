@@ -1,6 +1,14 @@
 import os
 import win32com.client
 import PyInstaller.__main__
+import psutil
+
+PROCNAME = "pyscreenshotutil.exe"
+
+for proc in psutil.process_iter():
+    # check whether the process name matches
+    if proc.name() == PROCNAME:
+        proc.kill()
 
 PyInstaller.__main__.run([
     'main.py',                   # your entry point
