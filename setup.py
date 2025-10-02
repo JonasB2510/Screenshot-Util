@@ -1,5 +1,15 @@
 import os
 import win32com.client
+import PyInstaller.__main__
+
+PyInstaller.__main__.run([
+    'main.py',                   # your entry point
+    '--onedir',                  # bundle into a folder (not single exe)
+    '--noconsole',               # no console window
+    '--name=pyscreenshotutil',   # exe name
+    '--icon=camera2.ico',        # custom icon
+])
+
 
 def create_shortcut(target_path, shortcut_name, subfolder=None, icon_path=None):
     # Convert all paths to absolute
