@@ -9,28 +9,9 @@ from datetime import datetime
 from screeninfo import get_monitors
 import json
 import psutil
-import platform
-from pathlib import Path
+import ctypes
+from tkinter import messagebox
 
-# Platform detection
-IS_LINUX = platform.system() == "Linux"
-IS_WINDOWS = platform.system() == "Windows"
-
-# Linux-specific imports
-if IS_LINUX:
-    try:
-        import pyscreenshot as ImageGrab_Linux
-        HAS_PYSCREENSHOT = True
-    except ImportError:
-        HAS_PYSCREENSHOT = False
-        print("Warning: pyscreenshot not found. Install with: pip install pyscreenshot")
-
-# Windows-specific imports
-if IS_WINDOWS:
-    import ctypes
-    from tkinter import messagebox
-
-# GUI library detection
 try:
     import customtkinter as ctk
     HAS_CUSTOMTKINTER = True
@@ -40,7 +21,7 @@ except ImportError:
     HAS_CUSTOMTKINTER = False
     print("customtkinter not found, using regular tkinter")
 
-EXENAME = "pyscreenshotutil.exe" if IS_WINDOWS else "pyscreenshotutil"
+EXENAME = "pyscreenshotutil.exe"
 SCREENSHOTPATH = "screenshots"
 SETTINGS_FILE = "settings.json"
 
@@ -52,7 +33,7 @@ class ScreenshotTool:
         self.setup_hotkeys()
         
     def load_settings(self):
-        """Load settings from JSON or use defaults"""
+        """Lade Einstellungen aus JSON oder verwende Standardwerte"""
         default_settings = {
             "screenshot_key": "f10",
             "open_folder_key": "f9",
@@ -70,7 +51,7 @@ class ScreenshotTool:
         return default_settings
     
     def save_settings(self):
-        """Save settings to JSON"""
+        """Speichere Einstellungen in JSON"""
         try:
             with open(SETTINGS_FILE, 'w') as f:
                 json.dump(self.settings, f, indent=4)
@@ -80,12 +61,12 @@ class ScreenshotTool:
             
     
     def setup_hotkeys(self):
-        """Register hotkeys based on settings"""
+        """Registriere die Hotkeys basierend auf den Einstellungen"""
         try:
-            # Remove all existing hotkeys
+            # Entferne alle existierenden Hotkeys
             keyboard.unhook_all()
             
-            # Register new hotkeys
+            # Registriere neue Hotkeys
             keyboard.add_hotkey(self.settings["screenshot_key"], self.take_screenshot, suppress=False)
             keyboard.add_hotkey(self.settings["open_folder_key"], self.open_folder, suppress=False)
             print(f"Hotkeys: {self.settings['screenshot_key']} (screenshot), {self.settings['open_folder_key']} (folder)")
@@ -93,7 +74,7 @@ class ScreenshotTool:
             print(f"Error setting up hotkeys: {e}")
     
     def get_mouse_monitor(self):
-        """Find the monitor where the mouse is located"""
+        """Finde den Monitor, auf dem sich die Maus befindet"""
         mouse_x, mouse_y = pyautogui.position()
         
         for monitor in get_monitors():
@@ -103,31 +84,16 @@ class ScreenshotTool:
         return get_monitors()[0]
     
     def open_folder(self):
-        """Open the screenshot folder"""
+        """Öffne den Screenshot-Ordner"""
         try:
             screenshot_path = self.settings["screenshot_path"]
             os.makedirs(screenshot_path, exist_ok=True)
-            
-            if IS_WINDOWS:
-                os.startfile(screenshot_path)
-            elif IS_LINUX:
-                # Try different file managers
-                try:
-                    os.system(f'xdg-open "{screenshot_path}"')
-                except:
-                    # Fallback options
-                    for cmd in ['nautilus', 'dolphin', 'thunar', 'pcmanfm', 'caja']:
-                        if os.system(f'which {cmd} > /dev/null 2>&1') == 0:
-                            os.system(f'{cmd} "{screenshot_path}" &')
-                            break
-            else:
-                os.system(f'open "{screenshot_path}"')  # macOS
-                
+            os.startfile(screenshot_path)
         except Exception as e:
             print(f"Error opening folder: {e}")
     
     def take_screenshot(self):
-        """Take a screenshot of the current monitor"""
+        """Mache einen Screenshot des aktuellen Monitors"""
         try:
             print("Taking screenshot...")
             monitor = self.get_mouse_monitor()
@@ -136,20 +102,7 @@ class ScreenshotTool:
                     monitor.x + monitor.width, 
                     monitor.y + monitor.height)
             
-            # Platform-specific screenshot method
-            if IS_WINDOWS:
-                image = ImageGrab.grab(bbox=bbox, all_screens=True)
-            elif IS_LINUX and HAS_PYSCREENSHOT:
-                # pyscreenshot for Linux
-                image = ImageGrab_Linux.grab(bbox=bbox, backend='scrot')
-            else:
-                # Fallback to PIL ImageGrab (may not work on all Linux systems)
-                try:
-                    image = ImageGrab.grab(bbox=bbox)
-                except:
-                    print("Error: Unable to take screenshot. Install pyscreenshot: pip install pyscreenshot")
-                    print("Also install scrot: sudo apt install scrot")
-                    return
+            image = ImageGrab.grab(bbox=bbox, all_screens=True)
             
             screenshot_path = self.settings["screenshot_path"]
             os.makedirs(screenshot_path, exist_ok=True)
@@ -162,27 +115,22 @@ class ScreenshotTool:
             
         except Exception as e:
             print(f"Error taking screenshot: {e}")
-            import traceback
-            traceback.print_exc()
     
     def open_settings_window(self):
-        """Open the settings window"""
-        if self.settings_window is not None:
-            try:
-                if self.settings_window.winfo_exists():
-                    self.settings_window.lift()
-                    self.settings_window.focus_force()
-                    return
-            except:
-                pass
+        """Öffne das Einstellungsfenster"""
+        if self.settings_window is not None and self.settings_window.winfo_exists():
+            self.settings_window.lift()
+            self.settings_window.focus_force()
+            return
         
         if HAS_CUSTOMTKINTER:
             self.create_customtkinter_settings()
         else:
+            #kp wieso claude
             self.create_tkinter_settings()
     
     def create_customtkinter_settings(self):
-        """Create settings window with CustomTkinter"""
+        """Erstelle Einstellungsfenster mit CustomTkinter"""
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
         
@@ -194,12 +142,12 @@ class ScreenshotTool:
         # Header
         header = ctk.CTkLabel(
             self.settings_window, 
-            text="Keybindings",
+            text="Keybindings", #⚙️ 
             font=ctk.CTkFont(size=20, weight="bold")
         )
         header.pack(pady=20)
         
-        # Frame for keybindings
+        # Frame für Keybindings
         frame = ctk.CTkFrame(self.settings_window)
         frame.pack(pady=10, padx=20, fill="both", expand=True)
         
@@ -248,7 +196,7 @@ class ScreenshotTool:
         self.settings_window.mainloop()
     
     def create_tkinter_settings(self):
-        """Create settings window with regular Tkinter"""
+        """Erstelle Einstellungsfenster mit regulärem Tkinter"""
         self.settings_window = tk.Tk()
         self.settings_window.title("Screenshot Tool - Settings")
         self.settings_window.geometry("400x200")
@@ -288,7 +236,7 @@ class ScreenshotTool:
         self.settings_window.mainloop()
     
     def listen_for_key(self, action):
-        """Wait for key press"""
+        """Warte auf Tastendruck"""
         print(f"Press new key for {action}...")
         
         def on_key(event):
@@ -303,7 +251,7 @@ class ScreenshotTool:
         hook = keyboard.on_press(on_key, suppress=False)
     
     def save_from_window(self):
-        """Save settings from window"""
+        """Speichere Einstellungen aus dem Fenster"""
         self.settings["screenshot_key"] = self.screenshot_key_var.get()
         self.settings["open_folder_key"] = self.folder_key_var.get()
         self.save_settings()
@@ -311,17 +259,17 @@ class ScreenshotTool:
         print("Settings saved and hotkeys updated!")
     
     def close_settings_window(self):
-        """Close settings window"""
+        """Schließe das Einstellungsfenster"""
         if self.settings_window:
             self.settings_window.destroy()
             self.settings_window = None
     
     def create_icon_image(self):
-        """Create an icon for the system tray"""
+        """Erstelle ein Icon für die System Tray"""
         image = Image.new('RGB', (64, 64), (30, 30, 30))
         d = ImageDraw.Draw(image)
         
-        # Draw camera
+        # Kamera zeichnen
         d.rectangle((10, 20, 54, 50), fill=(200, 200, 200), outline=(255, 255, 255))
         d.ellipse((22, 28, 42, 48), fill=(100, 100, 100))
         d.rectangle((44, 24, 52, 30), fill=(150, 150, 150))
@@ -329,13 +277,13 @@ class ScreenshotTool:
         return image
     
     def on_quit(self, icon, item):
-        """Exit the program"""
+        """Beende das Programm"""
         print("Exiting...")
         icon.stop()
         os._exit(0)
     
     def create_menu(self):
-        """Create the tray menu"""
+        """Erstelle das Tray-Menü"""
         return pystray.Menu(
             pystray.MenuItem("Take Screenshot", lambda: self.take_screenshot()),
             pystray.MenuItem("Open Folder", lambda: self.open_folder()),
@@ -346,7 +294,7 @@ class ScreenshotTool:
         )
     
     def run_tray(self):
-        """Start the system tray icon"""
+        """Starte das System Tray Icon"""
         self.icon = pystray.Icon(
             "screenshot_tool",
             self.create_icon_image(),
@@ -356,11 +304,10 @@ class ScreenshotTool:
         self.icon.run()
     
     def run(self):
-        """Start the entire program"""
+        """Starte das gesamte Programm"""
         os.makedirs(self.settings["screenshot_path"], exist_ok=True)
         
         print("Screenshot Tool started!")
-        print(f"Platform: {platform.system()}")
         print(f"Screenshot key: {self.settings['screenshot_key']}")
         print(f"Open folder key: {self.settings['open_folder_key']}")
         print("Check system tray for settings...")
@@ -383,39 +330,15 @@ if __name__ == "__main__":
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
             return False
-        
         if is_running(EXENAME):
-            error_msg = f"An instance of {EXENAME} has been detected. Please close the old instance to start a new one!"
-            print(f"Error: {error_msg}")
-            
-            if IS_WINDOWS:
-                messagebox.showerror("Error while starting program!", error_msg)
-            else:
-                # On Linux, just print to console
-                print("Cannot start multiple instances.")
+            messagebox.showerror("Error while starting program!", f"An instance of {EXENAME} has been detected. Please close out of the old instance to satrt a new one!")
             sys.exit(1)
         else:
-            # Linux-specific: Check for required tools
-            if IS_LINUX:
-                if not HAS_PYSCREENSHOT:
-                    print("Warning: pyscreenshot not installed. Screenshots may not work.")
-                    print("Install with: pip install pyscreenshot")
-                    print("Also install scrot: sudo apt install scrot")
-                
-                # Check if running with sudo (needed for keyboard on Linux)
-                if os.geteuid() != 0:
-                    print("\nWarning: Global hotkeys may not work without root privileges on Linux.")
-                    print("Run with: sudo python3 screenshot_tool.py")
-                    print("Continuing anyway...\n")
-            
             tool = ScreenshotTool()
             tool.run()
-            
     except KeyboardInterrupt:
         print("\nExiting...")
         sys.exit(0)
     except Exception as e:
         print(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
         sys.exit(1)
