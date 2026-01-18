@@ -63,4 +63,5 @@ def create_shortcut(target_path, shortcut_name, subfolder=None, icon_path=None):
 
 # Example usage
 exe_path = r"dist\pyscreenshotutil\pyscreenshotutil.exe"
-create_shortcut(exe_path, "PyScreenshotUtil", subfolder="JonasB2510 Apps", icon_path=exe_path)
+if input("Create shortcut (default N): ").lower() == "y":
+    create_shortcut(exe_path, "PyScreenshotUtil", subfolder="JonasB2510 Apps", icon_path=exe_path)
